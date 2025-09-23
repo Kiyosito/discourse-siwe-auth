@@ -8,9 +8,9 @@ enabled_site_setting :discourse_siwe_enabled
 register_svg_icon 'fab-ethereum'
 register_asset 'stylesheets/discourse-siwe.scss'
 
-%w[
-  ../lib/omniauth/strategies/siwe.rb
-].each { |path| load File.expand_path(path, __FILE__) }
+after_initialize do
+  require_relative "../lib/omniauth/strategies/siwe"
+end
 
 gem 'pkg-config', '1.5.6', require: false
 gem 'forwardable', '1.3.3', require: false
