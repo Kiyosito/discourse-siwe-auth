@@ -9,7 +9,7 @@ register_svg_icon 'fab-ethereum'
 register_asset 'stylesheets/discourse-siwe.scss'
 
 after_initialize do
-  require_relative "../lib/omniauth/strategies/siwe"
+  require_relative "lib/omniauth/strategies/siwe"
 end
 
 gem 'pkg-config', '1.5.6', require: false
