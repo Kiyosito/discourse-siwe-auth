@@ -8,6 +8,14 @@ module DiscourseSiwe
 
     def message
       eth_account = params[:eth_account]
+
+      begin
+        # força checksum EIP-55
+        eth_account = Eth::Address.new(eth_account).checksummed
+      rescue
+        Rails.logger.warn("Invalid ETH address received: #{eth_account}")
+      end
+
       domain = Discourse.base_url
       domain.slice!("#{Discourse.base_protocol}://")
       message = Siwe::Message.new(domain, eth_account, Discourse.base_url, "1", {
@@ -20,5 +28,6 @@ module DiscourseSiwe
 
       render json: { message: message.prepare_message }
     end
+
   end
 end
