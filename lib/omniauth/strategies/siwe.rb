@@ -1,57 +1,61 @@
+# frozen_string_literal: true
+
+require "omniauth"
+require "siwe"
+
 module OmniAuth
   module Strategies
     class Siwe
       include OmniAuth::Strategy
 
-      option :fields, %i[eth_message eth_account eth_signature]
-      option :uid_field, :eth_account
+      option :name, "siwe"
 
-      uid do
-        request.params[options.uid_field.to_s]
-      end
-
-      info do
-        {
-          name: request.params[options.uid_field.to_s],
-          image: request.params['eth_avatar']
-        }
-      end
-
+      # 1. Generate SIWE message
       def request_phase
-        query_string = env['QUERY_STRING']
-        redirect "/discourse-siwe/auth?#{query_string}"
+        nonce = ::Siwe::Util.generate_nonce
+        session["siwe_nonce"] = nonce
+
+        domain = Discourse.base_url.sub(/^https?:\/\//, "")
+        message = ::Siwe::Message.new(
+          domain,
+          nil, # address provided by frontend later
+          Discourse.base_url,
+          "1",
+          {
+            issued_at: Time.now.utc.iso8601,
+            statement: SiteSetting.siwe_statement.presence || "Sign in with Ethereum",
+            nonce: nonce
+          }
+        )
+
+        Rack::Response.new(
+          [200, {"Content-Type" => "application/json"}, [{ message: message.prepare_message, nonce: nonce }.to_json]]
+        ).finish
       end
 
+      # 2. Validate signature + extract wallet address
       def callback_phase
-        eth_message_crlf = request.params['eth_message']
-        eth_message = eth_message_crlf.encode(eth_message_crlf.encoding, universal_newline: true)
-        eth_signature = request.params['eth_signature']
-        siwe_message = ::Siwe::Message.from_message(eth_message)
+        signature   = request.params["signature"]
+        raw_message = request.params["message"]
 
-        domain = Discourse.base_url
-        domain.slice!("#{Discourse.base_protocol}://")
-        if siwe_message.domain != domain
-          return fail!("Invalid domain")
-        end
+        return fail!(:missing_params, StandardError.new("Missing signature or message")) if signature.blank? || raw_message.blank?
 
-        if siwe_message.nonce != session[:nonce]
-          return fail!("Invalid nonce")
-        end
-
-        failure_reason = nil
         begin
-          siwe_message.validate(eth_signature)
-        rescue Siwe::ExpiredMessage
-          failure_reason = :expired_message
-        rescue Siwe::NotValidMessage
-          failure_reason = :invalid_message
-        rescue Siwe::InvalidSignature
-          failure_reason = :invalid_signature
+          siwe_msg = ::Siwe::Message.from_message(raw_message)
+          siwe_msg.validate(signature, nonce: session["siwe_nonce"])
+
+          eth_address = siwe_msg.address.downcase
+
+          self.env["omniauth.auth"] = {
+            "provider" => "siwe",
+            "uid"      => eth_address,
+            "info"     => { "eth_address" => eth_address }
+          }
+
+          call_app!
+        rescue => e
+          fail!(:invalid_signature, e)
         end
-
-        return fail!(failure_reason) if failure_reason
-
-        super
       end
     end
   end
