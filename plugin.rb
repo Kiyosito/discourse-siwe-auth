@@ -47,9 +47,9 @@ class ::SiweAuthenticator < ::Auth::ManagedAuthenticator
   end
 end
 
-auth_provider authenticator: ::SiweAuthenticator.new,
-              icon: 'fab-ethereum',
-              full_screen_login: true
+# auth_provider authenticator: ::SiweAuthenticator.new,
+#               icon: 'fab-ethereum',
+#               full_screen_login: true
 
 after_initialize do
   %w[
