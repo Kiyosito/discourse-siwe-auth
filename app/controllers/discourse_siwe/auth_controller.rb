@@ -58,17 +58,40 @@ module DiscourseSiwe
 
         Rails.logger.info("[SIWE] signature verified OK for #{address}")
 
-        # find or create the user
-        user = User.find_by_custom_fields("eth_address" => address)
+        # normalize wallet address (lowercase) and build synthetic credentials
+        wallet = address.to_s.downcase
+        email = "#{wallet}@wallet.local"
+        # base username: eth_ + first 12 hex chars after 0x
+        base_uname = "eth_#{wallet.sub(/^0x/, '')[0, 12]}"
+        uname = base_uname
+
+        # try to find existing user by custom field or email
+        user = User.find_by_custom_fields("eth_account" => wallet) || User.find_by_email(email)
+
         unless user
-          user = User.create!(
-            username: "eth-#{address[2,6]}",
-            name: address,
-            custom_fields: { "eth_address" => address }
+          # ensure username uniqueness
+          suffix = 0
+          while User.where(username: uname).exists?
+            suffix += 1
+            uname = suffix == 1 ? "#{base_uname}" : "#{base_uname}_#{suffix}"
+          end
+
+          user = User.new(
+            username: uname,
+            name: uname,
+            email: email,
+            active: true
           )
-          Rails.logger.info("[SIWE] created new user id=#{user.id} for #{address}")
+
+          # attach wallet as custom field
+          user.custom_fields["eth_account"] = wallet
+
+          # save user; bypass email confirmation requirements
+          user.save!(validate: false)
+          Rails.logger.info("[SIWE] created new user id=#{user.id} username=#{user.username} for #{wallet}")
         end
 
+        # Log in and redirect
         log_on_user(user)
         Rails.logger.info("[SIWE] logged on user #{user.username} (#{address})")
 

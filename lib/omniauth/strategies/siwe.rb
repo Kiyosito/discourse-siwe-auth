@@ -35,8 +35,10 @@ module OmniAuth
 
       # 2. Validate signature + extract wallet address
       def callback_phase
-        signature   = request.params["signature"]
-        raw_message = request.params["message"]
+        # support both native omniauth names and our frontend names (eth_*)
+        signature   = request.params["signature"] || request.params["eth_signature"]
+        raw_message = request.params["message"]   || request.params["eth_message"]
+        wallet_param = request.params["address"]  || request.params["eth_account"]
 
         return fail!(:missing_params, StandardError.new("Missing signature or message")) if signature.blank? || raw_message.blank?
 
@@ -44,7 +46,7 @@ module OmniAuth
           siwe_msg = ::Siwe::Message.from_message(raw_message)
           siwe_msg.validate(signature, nonce: session["siwe_nonce"])
 
-          eth_address = siwe_msg.address.downcase
+          eth_address = (wallet_param.presence || siwe_msg.address).to_s.downcase
 
           self.env["omniauth.auth"] = {
             "provider" => "siwe",

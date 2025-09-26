@@ -4,93 +4,138 @@ import { popupAjaxError } from "discourse/lib/ajax-error";
 import loadScript from "discourse/lib/load-script";
 
 const Web3Modal = EmberObject.extend({
-  web3Modal: null,
-  ethereumClient: null,
+  appKit: null,
+  wagmiConfig: null,
+
   async providerInit(env) {
     await this.loadScripts();
-    const Web3Modal = window.Web3Modal;
-    const chains = [window.WagmiCore.mainnet, window.WagmiCore.polygon];
-    const projectId = env.PROJECT_ID;
-    const { publicClient } = window.WagmiCore.configureChains(chains, [
-      window.Web3ModalEth.w3mProvider({ projectId }),
-    ]);
-    const wagmiConfig = window.WagmiCore.createConfig({
-      autoConnect: true,
-      connectors: window.Web3ModalEth.w3mConnectors({
-        projectId,
-        version: 1,
-        chains,
-      }),
-      publicClient,
-    });
-    const EthereumClient = window.Web3ModalEth.EthereumClient;
-    const ethereumClient = new EthereumClient(wagmiConfig, chains);
-    this.ethereumClient = ethereumClient;
-    window.ethereumClient = ethereumClient;
 
-    const modal = new Web3Modal(
-      { projectId, themeVariables: { "--w3m-z-index": "99999" } },
-      ethereumClient
-    );
-    this.web3Modal = modal;
-    return modal;
+    const projectId = env.PROJECT_ID;
+
+    // Chains via viem UMD
+    const mainnet = window.viem.chains.mainnet;
+    const polygon = window.viem.chains.polygon;
+    const chains = [mainnet, polygon];
+
+    // Wagmi v2 config using viem transports and AppKit connector
+    const transports = {};
+    transports[mainnet.id] = window.viem.http();
+    transports[polygon.id] = window.viem.http();
+
+    const wagmiConfig = window.Wagmi.createConfig({
+      chains,
+      transports,
+      connectors: [window.AppKitWagmi.walletConnect({ projectId })],
+      ssr: false,
+      autoConnect: true,
+    });
+
+    this.wagmiConfig = wagmiConfig;
+
+    // Initialize AppKit (Reown)
+    this.appKit = window.AppKit.createAppKit({
+      projectId,
+      wagmiConfig,
+    });
+
+    return this.appKit;
   },
 
   async loadScripts() {
-    return Promise.all([
-      loadScript("/plugins/discourse-siwe/javascripts/web3bundle.min.js"),
-    ]);
+    // Load Reown AppKit + Wagmi v2 + viem UMDs
+    const urls = [
+      "https://cdn.jsdelivr.net/npm/viem@2.14.1/dist/viem.umd.min.js",
+      "https://cdn.jsdelivr.net/npm/wagmi@2.12.21/dist/wagmi.umd.js",
+      "https://cdn.jsdelivr.net/npm/@reown/appkit@1.1.1/dist/index.umd.js",
+      "https://cdn.jsdelivr.net/npm/@reown/appkit-wagmi@1.1.1/dist/index.umd.js",
+    ];
+    try {
+      await urls.reduce(
+        (p, url) => p.then(() => loadScript(url)),
+        Promise.resolve()
+      );
+    } catch (e) {
+      // Fallback: load legacy local bundle if CDN fails
+      await loadScript("/plugins/discourse-siwe/javascripts/web3bundle.min.js");
+    }
   },
 
   async signMessage(account) {
     let address = account.address;
 
-    // 🔑 Força checksum via ethers.js (já está disponível em web3bundle)
+    // Ensure lowercase, then checksum via viem if available
     try {
-      address = window.ethers.utils.getAddress(address);
+      address = window.viem.getAddress(address);
     } catch (e) {
-      console.error("Invalid ETH address at frontend:", address, e);
+      // fallback: sanitize
+      address = (address || "").toString();
     }
 
-    let name, avatar;
-    try {
-      name = await this.ethereumClient.fetchEnsName({ address });
-      if (name) {
-        avatar = await this.ethereumClient.fetchEnsAvatar({ name });
-      }
-    } catch (error) {
-      console.error(error);
-    }
+    // Optional ENS lookup (best-effort)
+    let name = null;
+    let avatar = null;
 
     const { message } = await ajax("/discourse-siwe/message", {
       data: {
         eth_account: address,
-        chain_id: await account.connector.getChainId(),
+        chain_id: account.chainId || (await this._getChainId()),
       },
     }).catch(popupAjaxError);
 
+    // Try signing via EIP-1193 provider; fallback to wagmi if available
+    let signature;
     try {
-      const signature = await (
-        await account.connector.getWalletClient()
-      ).signMessage({
-        account: address,
-        message: message,
-      });
-      return [name || address, message, signature, avatar];
+      if (window.Wagmi && typeof window.Wagmi.signMessage === "function") {
+        signature = await window.Wagmi.signMessage(this.wagmiConfig, {
+          message,
+        });
+      } else if (window.ethereum?.request) {
+        signature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [message, address],
+        });
+      } else {
+        throw new Error("No wallet client available to sign message");
+      }
     } catch (e) {
       throw e;
     }
+
+    return [name || address, message, signature, avatar];
+  },
+
+  async _getChainId() {
+    try {
+      if (window.Wagmi && typeof window.Wagmi.getChainId === "function") {
+        return await window.Wagmi.getChainId(this.wagmiConfig);
+      }
+      if (window.ethereum?.request) {
+        const hex = await window.ethereum.request({ method: "eth_chainId" });
+        return parseInt(hex, 16);
+      }
+    } catch (e) {}
+    return null;
   },
 
   async runSigningProcess(cb) {
-    window.WagmiCore.watchAccount(async (account) => {
-      if (account.isConnected && account.address) {
-        this.connected = true;
-        cb(await this.signMessage(account));
-      }
+    // Subscribe to account changes (wagmi v2 UMD)
+    window.Wagmi.watchAccount(this.wagmiConfig, {
+      onChange: async (account) => {
+        if (account.status === "connected" && account.address) {
+          this.connected = true;
+          cb(
+            await this.signMessage({
+              address: account.address,
+              chainId: account.chainId,
+            })
+          );
+        }
+      },
     });
 
-    this.web3Modal.openModal();
+    if (this.appKit && this.appKit.open) {
+      this.appKit.open();
+    }
   },
 });
 
