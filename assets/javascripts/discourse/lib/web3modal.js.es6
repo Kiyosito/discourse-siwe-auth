@@ -8,6 +8,18 @@ const Web3Modal = EmberObject.extend({
   wagmiConfig: null,
 
   async providerInit(env) {
+    // Remove any existing Web3Modal v1 elements to prevent conflicts
+    document.querySelectorAll("w3m-modal").forEach((el) => el.remove());
+
+    // Neutralize any global Web3Modal v1 instance
+    if (window.Web3Modal && !window.Web3Modal.AppKit) {
+      console.info(
+        "[SIWE] Detected legacy Web3Modal, neutralizing to prevent conflicts"
+      );
+      window.Web3Modal_Legacy = window.Web3Modal;
+      window.Web3Modal = undefined;
+    }
+
     await this.loadScripts();
 
     const projectId = env.PROJECT_ID;

@@ -63,4 +63,17 @@ after_initialize do
     # Force all login attempts to go through SIWE
     get '/login' => redirect('/discourse-siwe/auth')
   end
+
+  # Hard redirect for server-rendered /login pages that bypass routing precedence
+  class ::StaticController
+    alias_method :siwe_original_show, :show
+
+    def show
+      if params[:id].to_s == 'login'
+        redirect_to '/discourse-siwe/auth'
+      else
+        siwe_original_show
+      end
+    end
+  end
 end
