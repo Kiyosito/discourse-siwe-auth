@@ -60,5 +60,7 @@ after_initialize do
 
   Discourse::Application.routes.prepend do
     mount ::DiscourseSiwe::Engine, at: '/discourse-siwe'
+    # Force all login attempts to go through SIWE
+    get '/login' => redirect('/discourse-siwe/auth')
   end
 end

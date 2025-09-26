@@ -12,25 +12,8 @@ module OmniAuth
 
       # 1. Generate SIWE message
       def request_phase
-        nonce = ::Siwe::Util.generate_nonce
-        session["siwe_nonce"] = nonce
-
-        domain = Discourse.base_url.sub(/^https?:\/\//, "")
-        message = ::Siwe::Message.new(
-          domain,
-          nil, # address provided by frontend later
-          Discourse.base_url,
-          "1",
-          {
-            issued_at: Time.now.utc.iso8601,
-            statement: SiteSetting.siwe_statement.presence || "Sign in with Ethereum",
-            nonce: nonce
-          }
-        )
-
-        Rack::Response.new(
-          [200, {"Content-Type" => "application/json"}, [{ message: message.prepare_message, nonce: nonce }.to_json]]
-        ).finish
+        # Redirect the core login button directly to our public Ember route
+        return redirect("/discourse-siwe/auth")
       end
 
       # 2. Validate signature + extract wallet address

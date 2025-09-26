@@ -4,7 +4,12 @@ require 'eth'
 
 module DiscourseSiwe
   class AuthController < ::ApplicationController
-    skip_before_action :redirect_to_login_if_required
+    skip_before_action :redirect_to_login_if_required, only: [:index, :message, :callback]
+
+    # Public landing that boots the Ember route and opens AppKit
+    def index
+      render html: "".html_safe, layout: true
+    end
 
     # Step 1: frontend asks for message to sign
     def message

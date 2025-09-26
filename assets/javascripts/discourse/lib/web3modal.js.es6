@@ -42,22 +42,17 @@ const Web3Modal = EmberObject.extend({
   },
 
   async loadScripts() {
-    // Load Reown AppKit + Wagmi v2 + viem UMDs
+    // Load Reown AppKit + Wagmi v2 + viem UMDs (no legacy fallback)
     const urls = [
       "https://cdn.jsdelivr.net/npm/viem@2.14.1/dist/viem.umd.min.js",
       "https://cdn.jsdelivr.net/npm/wagmi@2.12.21/dist/wagmi.umd.js",
       "https://cdn.jsdelivr.net/npm/@reown/appkit@1.1.1/dist/index.umd.js",
       "https://cdn.jsdelivr.net/npm/@reown/appkit-wagmi@1.1.1/dist/index.umd.js",
     ];
-    try {
-      await urls.reduce(
-        (p, url) => p.then(() => loadScript(url)),
-        Promise.resolve()
-      );
-    } catch (e) {
-      // Fallback: load legacy local bundle if CDN fails
-      await loadScript("/plugins/discourse-siwe/javascripts/web3bundle.min.js");
-    }
+    await urls.reduce(
+      (p, url) => p.then(() => loadScript(url)),
+      Promise.resolve()
+    );
   },
 
   async signMessage(account) {
