@@ -48,17 +48,28 @@ module DiscourseSiwe
       message   = params[:message]
       signature = params[:signature]
       address   = params[:address]
+      nonce     = params[:nonce]
 
-      Rails.logger.info("[SIWE] /callback called with address=#{address.inspect}, signature=#{signature&.slice(0,10)}..., message_len=#{message&.length}")
+      Rails.logger.info("[SIWE] /callback called with:")
+      Rails.logger.info("  address=#{address.inspect}")
+      Rails.logger.info("  signature=#{signature&.slice(0,10)}...")
+      Rails.logger.info("  message_len=#{message&.length}")
+      Rails.logger.info("  nonce=#{nonce.inspect}")
+      Rails.logger.info("  session_nonce=#{session[:siwe_nonce].inspect}")
+      Rails.logger.info("  all_params=#{params.to_unsafe_h.keys.join(', ')}")
 
       begin
         siwe_msg = Siwe::Message.from_message(message)
         Rails.logger.info("[SIWE] parsed SIWE message: #{siwe_msg.to_h}")
 
+        # Use nonce from params if available, otherwise fall back to session
+        validation_nonce = nonce.presence || session[:siwe_nonce]
+        Rails.logger.info("[SIWE] Using nonce for validation: #{validation_nonce.inspect}")
+        
         siwe_msg.verify(
           signature: signature,
           domain: Discourse.current_hostname,
-          nonce: session[:siwe_nonce]
+          nonce: validation_nonce
         )
 
         Rails.logger.info("[SIWE] signature verified OK for #{address}")

@@ -28,6 +28,16 @@ const Web3Modal = EmberObject.extend({
       },
     }).catch(popupAjaxError);
 
+    // Store nonce from message for later validation
+    const nonceMatch = message.match(/nonce:\s*([a-zA-Z0-9]+)/);
+    if (nonceMatch) {
+      const nonce = nonceMatch[1];
+      sessionStorage.setItem("siwe_nonce", nonce);
+      console.info("[SIWE] Stored nonce:", nonce);
+    } else {
+      console.warn("[SIWE] Could not extract nonce from message");
+    }
+
     // Sign message with wallet
     const signature = await window.ethereum.request({
       method: "personal_sign",
@@ -187,6 +197,14 @@ const Web3Modal = EmberObject.extend({
       signatureInput.value = result[2]; // signature
 
       console.info("[SIWE] Form filled, submitting...");
+
+      // Log form data before submission
+      const formData = new FormData(form);
+      console.info("[SIWE] Form data being submitted:");
+      for (let [key, value] of formData.entries()) {
+        console.info(`[SIWE] ${key}: ${value.toString().substring(0, 50)}...`);
+      }
+
       form.submit();
     } catch (e) {
       console.error("[SIWE] Wallet connection failed:", e);
