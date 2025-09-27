@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
-class SiweAuthenticator < ::Auth::Authenticator
+class SiweAuthenticator < ::Auth::ManagedAuthenticator
   def name
     "siwe"
+  end
+
+  def register_middleware(omniauth)
+    omniauth.provider :siwe
   end
 
   def after_authenticate(auth_token, existing_account: nil)
@@ -15,23 +19,28 @@ class SiweAuthenticator < ::Auth::Authenticator
 
     unless user
       # Create new user
-      username = "eth_" + eth_address[2..8]
+      username = "eth_" + eth_address[2, 12]
       email = "#{eth_address}@siwe.local"
 
       user = User.new(username: username, email: email, active: true)
       user.custom_fields["eth_account"] = eth_address
-      user.save!
+      user.save!(validate: false)
     end
 
     result.user = user
     result.username = user.username
     result.email = user.email
     result.extra_data = { eth_address: eth_address }
+    result.email_valid = true
 
     result
   end
 
   def enabled?
     SiteSetting.discourse_siwe_enabled
+  end
+
+  def primary_email_verified?
+    false
   end
 end
