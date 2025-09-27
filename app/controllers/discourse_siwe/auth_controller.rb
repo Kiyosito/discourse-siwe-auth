@@ -60,7 +60,7 @@ module DiscourseSiwe
 
       begin
         siwe_msg = Siwe::Message.from_message(message)
-        Rails.logger.info("[SIWE] parsed SIWE message: #{siwe_msg.to_h}")
+        Rails.logger.info("[SIWE] parsed SIWE message: address=#{siwe_msg.address}, domain=#{siwe_msg.domain}, nonce=#{siwe_msg.nonce}")
 
         # Use nonce from params if available, otherwise fall back to session
         validation_nonce = nonce.presence || session[:siwe_nonce]

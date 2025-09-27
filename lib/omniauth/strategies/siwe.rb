@@ -38,13 +38,13 @@ module OmniAuth
           Rails.logger.info("[SIWE OmniAuth] Normalized message: #{normalized_message.inspect}")
 
           siwe_msg = ::Siwe::Message.from_message(normalized_message)
-          Rails.logger.info("[SIWE OmniAuth] Parsed SIWE message: #{siwe_msg.to_h}")
+          Rails.logger.info("[SIWE OmniAuth] Parsed SIWE message: address=#{siwe_msg.address}, domain=#{siwe_msg.domain}, nonce=#{siwe_msg.nonce}")
 
           validation_nonce = request.params["nonce"].presence || session["siwe_nonce"]
           Rails.logger.info("[SIWE OmniAuth] Using nonce: #{validation_nonce}")
 
-          # Verify signature with nonce only (domain already in message)
-          siwe_msg.verify(signature: signature, nonce: validation_nonce)
+          # Verify signature with nonce and domain (siwe 1.1.2 requires both)
+          siwe_msg.verify(signature: signature, domain: siwe_msg.domain, nonce: validation_nonce)
           Rails.logger.info("[SIWE OmniAuth] Signature verified successfully")
 
           eth_address = (wallet_param.presence || siwe_msg.address).to_s.downcase
