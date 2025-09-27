@@ -7,7 +7,6 @@
 enabled_site_setting :discourse_siwe_enabled
 register_svg_icon 'fab-ethereum'
 register_asset 'stylesheets/discourse-siwe.scss'
-register_asset 'javascripts/discourse/initializers/siwe-login-button.js.es6'
 
 after_initialize do
   require_relative "lib/omniauth/strategies/siwe"
