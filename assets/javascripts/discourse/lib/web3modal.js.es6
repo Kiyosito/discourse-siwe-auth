@@ -61,10 +61,22 @@ const Web3Modal = EmberObject.extend({
       "https://cdn.jsdelivr.net/npm/@reown/appkit@1.1.1/dist/index.umd.js",
       "https://cdn.jsdelivr.net/npm/@reown/appkit-wagmi@1.1.1/dist/index.umd.js",
     ];
-    await urls.reduce(
-      (p, url) => p.then(() => loadScript(url)),
-      Promise.resolve()
-    );
+
+    console.info("[SIWE] Loading CDN scripts...");
+    try {
+      await urls.reduce(
+        (p, url) =>
+          p.then(() => {
+            console.info(`[SIWE] Loading: ${url}`);
+            return loadScript(url);
+          }),
+        Promise.resolve()
+      );
+      console.info("[SIWE] All CDN scripts loaded successfully");
+    } catch (e) {
+      console.error("[SIWE] Failed to load CDN scripts:", e);
+      throw e;
+    }
   },
 
   async signMessage(account) {

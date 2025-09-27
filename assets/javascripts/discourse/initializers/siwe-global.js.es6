@@ -15,10 +15,30 @@ export default {
             PROJECT_ID: siteSettings.siwe_project_id,
           };
 
+          console.info("[SIWE] Project ID:", env.PROJECT_ID);
+
+          if (!env.PROJECT_ID) {
+            console.error(
+              "[SIWE] No PROJECT_ID found! Please configure siwe_project_id in Admin > Settings > Plugins"
+            );
+            alert(
+              "SIWE Project ID not configured. Please contact administrator."
+            );
+            return;
+          }
+
+          console.info("[SIWE] Creating Web3Modal provider...");
           let provider = Web3Modal.create();
+
+          console.info("[SIWE] Initializing provider...");
           await provider.providerInit(env);
+
+          console.info("[SIWE] Starting signing process...");
           await provider.runSigningProcess(async (res) => {
             try {
+              console.info(
+                "[SIWE] Signing process completed, processing result..."
+              );
               const [account, message, signature, avatar] = res;
 
               // Fill form and submit
@@ -33,6 +53,7 @@ export default {
           });
         } catch (e) {
           console.error("[SIWE] Error initializing auth:", e);
+          alert("Authentication failed: " + e.message);
         }
       };
 
