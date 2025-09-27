@@ -133,6 +133,27 @@ const Web3Modal = EmberObject.extend({
         }
       }
 
+      // Add nonce from session (needed for SIWE validation)
+      const siweNonce =
+        sessionStorage.getItem("siwe_nonce") ||
+        localStorage.getItem("siwe_nonce");
+      if (siweNonce) {
+        let nonceInput = document.getElementById("siwe_nonce");
+        if (!nonceInput) {
+          nonceInput = document.createElement("input");
+          nonceInput.type = "hidden";
+          nonceInput.name = "nonce";
+          nonceInput.id = "siwe_nonce";
+          form.appendChild(nonceInput);
+        }
+        nonceInput.value = siweNonce;
+        console.info("[SIWE] Nonce added to form:", siweNonce);
+      } else {
+        console.warn(
+          "[SIWE] No nonce found in session - this may cause validation to fail"
+        );
+      }
+
       // Create hidden inputs with the correct parameter names
       let accountInput = document.getElementById("eth_account");
       let messageInput = document.getElementById("eth_message");
