@@ -59,6 +59,12 @@ const Web3Modal = EmberObject.extend({
         chainId: parseInt(chainId, 16),
       });
 
+      console.info(
+        "[SIWE] About to fill form with result:",
+        result.length,
+        "items"
+      );
+
       // Fill form with correct parameter names for OmniAuth
       const form = document.getElementById("siwe-sign");
 
