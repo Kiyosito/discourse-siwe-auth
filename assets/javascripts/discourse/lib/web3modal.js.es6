@@ -72,6 +72,9 @@ const Web3Modal = EmberObject.extend({
           .find((row) => row.startsWith("csrf_token="))
           ?.split("=")[1];
 
+      console.info("[SIWE] CSRF token found:", csrfToken ? "YES" : "NO");
+      console.info("[SIWE] CSRF token value:", csrfToken);
+
       if (csrfToken) {
         let csrfInput = document.getElementById("csrf_token");
         if (!csrfInput) {
@@ -82,9 +85,46 @@ const Web3Modal = EmberObject.extend({
           form.appendChild(csrfInput);
         }
         csrfInput.value = csrfToken;
-        console.info("[SIWE] CSRF token added to form");
+        console.info(
+          "[SIWE] CSRF token added to form:",
+          csrfToken.substring(0, 10) + "..."
+        );
       } else {
-        console.warn("[SIWE] No CSRF token found");
+        console.warn("[SIWE] No CSRF token found - checking alternatives...");
+
+        // Try alternative methods to get CSRF token
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfCookie = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("csrf_token="));
+
+        console.info("[SIWE] CSRF meta tag:", csrfMeta);
+        console.info("[SIWE] CSRF cookie:", csrfCookie);
+
+        // Try to get from Rails CSRF token endpoint
+        console.warn("[SIWE] Attempting to get CSRF token from /session/csrf");
+        try {
+          const response = await fetch("/session/csrf.json");
+          const data = await response.json();
+          if (data.csrf) {
+            const fallbackToken = data.csrf;
+            let csrfInput = document.getElementById("csrf_token");
+            if (!csrfInput) {
+              csrfInput = document.createElement("input");
+              csrfInput.type = "hidden";
+              csrfInput.name = "authenticity_token";
+              csrfInput.id = "csrf_token";
+              form.appendChild(csrfInput);
+            }
+            csrfInput.value = fallbackToken;
+            console.info(
+              "[SIWE] CSRF token obtained from endpoint:",
+              fallbackToken.substring(0, 10) + "..."
+            );
+          }
+        } catch (e) {
+          console.error("[SIWE] Failed to get CSRF token from endpoint:", e);
+        }
       }
 
       // Create hidden inputs with the correct parameter names
