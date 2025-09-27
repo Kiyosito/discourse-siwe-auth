@@ -26,8 +26,15 @@ module OmniAuth
         return fail!(:missing_params, StandardError.new("Missing signature or message")) if signature.blank? || raw_message.blank?
 
         begin
-          siwe_msg = ::Siwe::Message.from_message(raw_message)
-          siwe_msg.validate(signature, nonce: session["siwe_nonce"])
+          # Normalize Windows CRLF to LF to satisfy siwe gem regex expectations
+          normalized_message = raw_message.to_s.gsub("\r\n", "\n").strip
+
+          siwe_msg = ::Siwe::Message.from_message(normalized_message)
+
+          validation_nonce = request.params["nonce"].presence || session["siwe_nonce"]
+
+          # Include domain for strict verification
+          siwe_msg.verify(signature: signature, domain: Discourse.current_hostname, nonce: validation_nonce)
 
           eth_address = (wallet_param.presence || siwe_msg.address).to_s.downcase
 
