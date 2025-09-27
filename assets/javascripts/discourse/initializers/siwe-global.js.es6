@@ -5,8 +5,8 @@ export default {
   name: "siwe-global",
   initialize() {
     withPluginApi("0.8.31", (api) => {
-      // Create global function for SIWE auth
-      window.siweAuthButton = async function () {
+      // Handle SIWE auth
+      const startAuth = async function () {
         try {
           console.info("[SIWE] Starting authentication...");
 
@@ -36,7 +36,29 @@ export default {
         }
       };
 
-      console.info("[SIWE] Global authentication function registered");
+      // Attach click handler to button when route changes
+      api.onPageChange(() => {
+        setTimeout(() => {
+          const button = document.getElementById("siwe-auth-button");
+          if (button) {
+            // Remove existing listeners by cloning
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            // Add new event listener
+            newButton.addEventListener("click", startAuth);
+            console.info("[SIWE] Auth button handler attached");
+
+            // Auto-start auth if URL has ?auto=true
+            if (window.location.search.includes("auto=true")) {
+              console.info("[SIWE] Auto-starting authentication");
+              startAuth();
+            }
+          }
+        }, 500);
+      });
+
+      console.info("[SIWE] Auth handler registered");
     });
   },
 };
