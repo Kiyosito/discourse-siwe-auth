@@ -56,10 +56,10 @@ const Web3Modal = EmberObject.extend({
   async loadScripts() {
     // Load Reown AppKit + Wagmi v2 + viem UMDs (no legacy fallback)
     const urls = [
-      "https://cdn.jsdelivr.net/npm/viem@2.14.1/dist/viem.umd.min.js",
-      "https://cdn.jsdelivr.net/npm/wagmi@2.12.21/dist/wagmi.umd.js",
-      "https://cdn.jsdelivr.net/npm/@reown/appkit@1.1.1/dist/index.umd.js",
-      "https://cdn.jsdelivr.net/npm/@reown/appkit-wagmi@1.1.1/dist/index.umd.js",
+      "https://unpkg.com/viem@2.14.1/dist/viem.umd.js",
+      "https://unpkg.com/wagmi@2.12.21/dist/wagmi.umd.js",
+      "https://unpkg.com/@reown/appkit@1.1.1/dist/index.umd.js",
+      "https://unpkg.com/@reown/appkit-wagmi@1.1.1/dist/index.umd.js",
     ];
 
     console.info("[SIWE] Loading CDN scripts...");
