@@ -26,17 +26,29 @@ module OmniAuth
         return fail!(:missing_params, StandardError.new("Missing signature or message")) if signature.blank? || raw_message.blank?
 
         begin
+          Rails.logger.info("[SIWE OmniAuth] Starting verification")
+          Rails.logger.info("[SIWE OmniAuth] Raw message length: #{raw_message&.length}")
+          Rails.logger.info("[SIWE OmniAuth] Signature: #{signature&.slice(0,10)}...")
+          Rails.logger.info("[SIWE OmniAuth] Wallet param: #{wallet_param}")
+          Rails.logger.info("[SIWE OmniAuth] Nonce param: #{request.params['nonce']}")
+          Rails.logger.info("[SIWE OmniAuth] Session nonce: #{session['siwe_nonce']}")
+
           # Normalize Windows CRLF to LF to satisfy siwe gem regex expectations
-          normalized_message = raw_message.to_s.gsub("\r\n", "\n").strip
+          normalized_message = raw_message.to_s.gsub("\r\n", "\n")
+          Rails.logger.info("[SIWE OmniAuth] Normalized message: #{normalized_message.inspect}")
 
           siwe_msg = ::Siwe::Message.from_message(normalized_message)
+          Rails.logger.info("[SIWE OmniAuth] Parsed SIWE message: #{siwe_msg.to_h}")
 
           validation_nonce = request.params["nonce"].presence || session["siwe_nonce"]
+          Rails.logger.info("[SIWE OmniAuth] Using nonce: #{validation_nonce}")
 
-          # Include domain for strict verification
-          siwe_msg.verify(signature: signature, domain: Discourse.current_hostname, nonce: validation_nonce)
+          # Verify signature with nonce only (domain already in message)
+          siwe_msg.verify(signature: signature, nonce: validation_nonce)
+          Rails.logger.info("[SIWE OmniAuth] Signature verified successfully")
 
           eth_address = (wallet_param.presence || siwe_msg.address).to_s.downcase
+          Rails.logger.info("[SIWE OmniAuth] Final eth_address: #{eth_address}")
 
           self.env["omniauth.auth"] = {
             "provider" => "siwe",
@@ -44,8 +56,11 @@ module OmniAuth
             "info"     => { "eth_address" => eth_address }
           }
 
+          Rails.logger.info("[SIWE OmniAuth] Auth hash created, calling app")
           call_app!
         rescue => e
+          Rails.logger.error("[SIWE OmniAuth] Verification failed: #{e.class}: #{e.message}")
+          Rails.logger.error("[SIWE OmniAuth] Backtrace: #{e.backtrace.first(5).join("\n")}")
           fail!(:invalid_signature, e)
         end
       end

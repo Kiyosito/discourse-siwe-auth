@@ -13,18 +13,36 @@ class SiweAuthenticator < ::Auth::ManagedAuthenticator
     eth_address = auth_token[:info]["eth_address"].downcase
     result = Auth::Result.new
 
-    # Find existing user by eth_account
-    user = User.joins(:user_custom_fields)
-               .find_by(user_custom_fields: { name: "eth_account", value: eth_address })
+    # Find existing user by custom field
+    user = User.find_by_custom_fields("eth_account" => eth_address)
 
     unless user
-      # Create new user
-      username = "eth_" + eth_address[2, 12]
-      email = "#{eth_address}@siwe.local"
+      # Create new user with auto-generated username
+      base_username = "eth_#{eth_address[2, 12]}"
+      username = base_username
+      counter = 0
+      
+      # Ensure username uniqueness
+      while User.where(username: username).exists?
+        counter += 1
+        username = "#{base_username}_#{counter}"
+      end
 
-      user = User.new(username: username, email: email, active: true)
+      email = "#{eth_address}@wallet.local"
+
+      user = User.new(
+        username: username,
+        name: username,
+        email: email,
+        active: true,
+        approved: true,
+        email_confirmed: true
+      )
+      
       user.custom_fields["eth_account"] = eth_address
       user.save!(validate: false)
+      
+      Rails.logger.info("[SIWE] Created user #{username} for #{eth_address}")
     end
 
     result.user = user

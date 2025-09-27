@@ -27,8 +27,6 @@ gem 'scrypt', '3.0.7', require: false
 gem 'eth', '0.5.11', require: false
 gem 'siwe', '1.1.2', require: false
 
-class ::SiweAuthenticator < ::Auth::ManagedAuthenticator; end
-
 auth_provider authenticator: ::SiweAuthenticator.new,
               icon: 'fab-ethereum',
               full_screen_login: true
