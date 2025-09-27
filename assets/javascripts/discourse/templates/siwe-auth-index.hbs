@@ -1,15 +1,23 @@
-<form id="siwe-sign" method="POST" action="/auth/siwe/callback" style="display: none;">
-  <textarea id="eth_account" name="eth_account"></textarea>
-  <textarea id="eth_message" name="eth_message"></textarea>
-  <textarea id="eth_signature" name="eth_signature"></textarea>
-  <textarea id="eth_avatar" name="eth_avatar"></textarea>
-</form>
-<div class="eth_provider_container">
-  <div class="eth_provider_auth_button">
-    {{d-button
-      class="btn-primary"
-      action=(action "initAuth")
-      label="eth_providers.buttons.start"
-    }}
+<div class="siwe-auth-container">
+  <h2>Sign in with Ethereum</h2>
+  <p>Connect your wallet to sign in to the forum.</p>
+  
+  <form id="siwe-sign" method="POST" action="/auth/siwe/callback" style="display: none;">
+    <textarea id="eth_account" name="eth_account"></textarea>
+    <textarea id="eth_message" name="eth_message"></textarea>
+    <textarea id="eth_signature" name="eth_signature"></textarea>
+    <textarea id="eth_avatar" name="eth_avatar"></textarea>
+  </form>
+  
+  <div class="eth_provider_container">
+    <div class="eth_provider_auth_button">
+      <button 
+        class="btn btn-primary btn-large" 
+        type="button"
+        onclick="window.siweAuthButton()"
+      >
+        Sign-in with Ethereum
+      </button>
+    </div>
   </div>
 </div>
