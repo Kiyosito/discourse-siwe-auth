@@ -62,6 +62,31 @@ const Web3Modal = EmberObject.extend({
       // Fill form with correct parameter names for OmniAuth
       const form = document.getElementById("siwe-sign");
 
+      // Get CSRF token from meta tag or cookie
+      const csrfToken =
+        document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content") ||
+        document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("csrf_token="))
+          ?.split("=")[1];
+
+      if (csrfToken) {
+        let csrfInput = document.getElementById("csrf_token");
+        if (!csrfInput) {
+          csrfInput = document.createElement("input");
+          csrfInput.type = "hidden";
+          csrfInput.name = "authenticity_token";
+          csrfInput.id = "csrf_token";
+          form.appendChild(csrfInput);
+        }
+        csrfInput.value = csrfToken;
+        console.info("[SIWE] CSRF token added to form");
+      } else {
+        console.warn("[SIWE] No CSRF token found");
+      }
+
       // Create hidden inputs with the correct parameter names
       let accountInput = document.getElementById("eth_account");
       let messageInput = document.getElementById("eth_message");
