@@ -8,11 +8,6 @@ enabled_site_setting :discourse_siwe_enabled
 register_svg_icon 'fab-ethereum'
 register_asset 'stylesheets/discourse-siwe.scss'
 
-after_initialize do
-  require_relative "lib/omniauth/strategies/siwe"
-  require_relative "lib/siwe_authenticator"
-end
-
 gem 'pkg-config', '1.5.6', require: false
 gem 'forwardable', '1.3.3', require: false
 gem 'mkmfmf', '0.4', require: false
@@ -27,9 +22,14 @@ gem 'scrypt', '3.0.7', require: false
 gem 'eth', '0.5.11', require: false
 gem 'siwe', '1.1.2', require: false
 
-auth_provider authenticator: ::SiweAuthenticator.new,
-              icon: 'fab-ethereum',
-              full_screen_login: true
+after_initialize do
+  require_relative "lib/omniauth/strategies/siwe"
+  require_relative "lib/siwe_authenticator"
+  
+  auth_provider authenticator: ::SiweAuthenticator.new,
+                icon: 'fab-ethereum',
+                full_screen_login: true
+end
 
 after_initialize do
   %w[
