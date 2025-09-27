@@ -28,8 +28,8 @@ const Web3Modal = EmberObject.extend({
       },
     }).catch(popupAjaxError);
 
-    // Store nonce from message for later validation
-    const nonceMatch = message.match(/nonce:\s*([a-zA-Z0-9]+)/);
+    // Store nonce from message for later validation (case-insensitive)
+    const nonceMatch = message.match(/nonce:\s*([a-zA-Z0-9]+)/i);
     if (nonceMatch) {
       const nonce = nonceMatch[1];
       sessionStorage.setItem("siwe_nonce", nonce);

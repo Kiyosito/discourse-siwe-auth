@@ -112,6 +112,7 @@ module DiscourseSiwe
         Rails.logger.info("[SIWE] logged on user #{user.username} (#{address})")
 
         redirect_to "/"
+        return
       rescue => e
         Rails.logger.error("[SIWE] Verification failed: #{e.class}: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
         render plain: "Authentication failed: #{e}", status: 401
