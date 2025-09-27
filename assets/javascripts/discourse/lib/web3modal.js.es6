@@ -59,7 +59,43 @@ const Web3Modal = EmberObject.extend({
         chainId: parseInt(chainId, 16),
       });
 
-      cb(result);
+      // Fill form with correct parameter names for OmniAuth
+      const form = document.getElementById("siwe-sign");
+
+      // Create hidden inputs with the correct parameter names
+      let accountInput = document.getElementById("eth_account");
+      let messageInput = document.getElementById("eth_message");
+      let signatureInput = document.getElementById("eth_signature");
+
+      if (!accountInput) {
+        accountInput = document.createElement("input");
+        accountInput.type = "hidden";
+        accountInput.name = "address";
+        accountInput.id = "eth_account";
+        form.appendChild(accountInput);
+      }
+      accountInput.value = address;
+
+      if (!messageInput) {
+        messageInput = document.createElement("input");
+        messageInput.type = "hidden";
+        messageInput.name = "message";
+        messageInput.id = "eth_message";
+        form.appendChild(messageInput);
+      }
+      messageInput.value = result[1]; // message
+
+      if (!signatureInput) {
+        signatureInput = document.createElement("input");
+        signatureInput.type = "hidden";
+        signatureInput.name = "signature";
+        signatureInput.id = "eth_signature";
+        form.appendChild(signatureInput);
+      }
+      signatureInput.value = result[2]; // signature
+
+      console.info("[SIWE] Form filled, submitting...");
+      form.submit();
     } catch (e) {
       console.error("[SIWE] Wallet connection failed:", e);
       throw e;
