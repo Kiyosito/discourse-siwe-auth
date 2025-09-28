@@ -44,6 +44,19 @@ after_initialize do
     get '/login' => redirect('/discourse-siwe/auth')
   end
 
+  # Redirect unauthenticated users from homepage to SIWE auth
+  class ::HomePageController
+    alias_method :siwe_original_blank, :blank
+
+    def blank
+      unless current_user
+        redirect_to '/discourse-siwe/auth'
+        return
+      end
+      siwe_original_blank
+    end
+  end
+
   # Hard redirect for server-rendered /login pages that bypass routing precedence
   class ::StaticController
     alias_method :siwe_original_show, :show
