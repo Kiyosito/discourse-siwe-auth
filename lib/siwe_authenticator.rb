@@ -10,7 +10,23 @@ class SiweAuthenticator < ::Auth::ManagedAuthenticator
   end
 
   def after_authenticate(auth_token, existing_account: nil)
-    eth_address = auth_token[:info]["eth_address"].downcase
+    info = auth_token[:info] || auth_token["info"]
+    info ||= auth_token.info if auth_token.respond_to?(:info)
+
+    unless info
+      Rails.logger.error("[SIWE] after_authenticate received auth_token without info: #{auth_token.inspect}")
+      raise ::Discourse::InvalidAccess.new("SIWE auth response missing info block")
+    end
+
+    eth_address_value = info[:eth_address] || info["eth_address"] || info.eth_address if info.respond_to?(:eth_address)
+    unless eth_address_value.present?
+      Rails.logger.error("[SIWE] after_authenticate missing eth_address in info: #{info.inspect}")
+      raise ::Discourse::InvalidAccess.new("SIWE auth response missing eth_address")
+    end
+
+    eth_address = eth_address_value.downcase
+    Rails.logger.info("[SIWE] after_authenticate processing eth_address=#{eth_address}")
+
     result = Auth::Result.new
 
     # Find existing user by custom field
