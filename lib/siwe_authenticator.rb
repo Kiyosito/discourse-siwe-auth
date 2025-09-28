@@ -59,8 +59,7 @@ class SiweAuthenticator < ::Auth::ManagedAuthenticator
         name: username,
         email: email,
         active: true,
-        approved: true,
-        email_confirmed: true
+        approved: true
       )
       
       user.custom_fields["eth_account"] = eth_address
