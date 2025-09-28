@@ -10,6 +10,7 @@ module DiscourseSiwe
     def index
       # Don't render anything - let Ember handle it completely
       # The Ember route will handle the template rendering
+      head :ok
     end
 
     # Step 1: frontend asks for message to sign
