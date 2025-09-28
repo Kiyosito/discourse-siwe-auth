@@ -9,8 +9,7 @@
   text-align: center;
   justify-content: center;
   z-index: 9999;
-  background-color: var(--secondary);
-  background-image: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.95)), url('/plugins/discourse-siwe/images/kiyosito-bg.svg');
+  background-color: #1a1a1a;
   background-size: cover;
   background-position: center;
 }
@@ -25,19 +24,20 @@
 }
 
 .kiyosito-logo {
-  max-width: 150px;
-  margin-bottom: 1em;
+  max-width: 200px;
+  margin-bottom: 1.5em;
   height: auto;
+  filter: brightness(0) invert(1); /* Deixa o logo branco */
 }
 
 .siwe-auth-container h1 {
-  color: #333;
+  color: #ffffff;
   font-size: 2.5em;
   margin-bottom: 0.5em;
 }
 
 .siwe-auth-container h2 {
-  color: #444;
+  color: #ffffff;
   font-size: 1.8em;
   margin-bottom: 1em;
 }
@@ -47,16 +47,17 @@
   max-width: 600px;
   margin: 0 auto 2em;
   line-height: 1.5;
-  color: #555;
+  color: #cccccc;
 }
 
 .token-requirements {
-  background-color: rgba(255, 245, 230, 0.8);
+  background-color: rgba(40, 40, 40, 0.8);
   border-radius: 8px;
   padding: 1em;
   margin: 1em auto 2em;
   max-width: 500px;
-  border-left: 4px solid #f0ad4e;
+  border-left: 4px solid #ED1C24;
+  color: #ffffff;
 }
 
 .btn-kiyosito {
