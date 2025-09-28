@@ -18,7 +18,15 @@ class SiweAuthenticator < ::Auth::ManagedAuthenticator
       raise ::Discourse::InvalidAccess.new("SIWE auth response missing info block")
     end
 
-    eth_address_value = info[:eth_address] || info["eth_address"] || info.eth_address if info.respond_to?(:eth_address)
+    Rails.logger.debug("[SIWE] after_authenticate info payload class=#{info.class} value=#{info.inspect}")
+
+    eth_address_value = nil
+    if info.respond_to?(:[])
+      eth_address_value ||= info[:eth_address]
+      eth_address_value ||= info["eth_address"]
+    end
+    eth_address_value ||= info.eth_address if info.respond_to?(:eth_address)
+
     unless eth_address_value.present?
       Rails.logger.error("[SIWE] after_authenticate missing eth_address in info: #{info.inspect}")
       raise ::Discourse::InvalidAccess.new("SIWE auth response missing eth_address")
