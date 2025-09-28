@@ -8,7 +8,8 @@ module DiscourseSiwe
 
     # Public landing that boots the Ember route and opens AppKit
     def index
-      render html: "".html_safe, layout: true
+      # Let Ember handle the rendering
+      render layout: true
     end
 
     # Step 1: frontend asks for message to sign
