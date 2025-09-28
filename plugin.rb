@@ -20,7 +20,7 @@ gem 'ffi', '1.17.2', require: false
 gem 'ffi-compiler', '1.0.1', require: false
 gem 'scrypt', '3.0.7', require: false
 gem 'eth', '0.5.11', require: false
-gem 'siwe', '1.1.2', require: false
+gem 'siwe', '1.0.0', require: false
 
 after_initialize do
   require_relative "lib/omniauth/strategies/siwe"
@@ -50,6 +50,12 @@ after_initialize do
 
     def blank
       unless current_user
+        # Allow access to admin paths
+        if request.path.include?('/admin')
+          siwe_original_blank
+          return
+        end
+        
         redirect_to '/discourse-siwe/auth'
         return
       end
