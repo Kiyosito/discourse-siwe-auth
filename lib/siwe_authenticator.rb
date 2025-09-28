@@ -38,7 +38,7 @@ class SiweAuthenticator < ::Auth::ManagedAuthenticator
     result = Auth::Result.new
 
     # Find existing user by custom field
-    user = User.find_by_custom_fields("eth_account" => eth_address)
+    user = UserCustomField.where(name: "eth_account", value: eth_address).first&.user
 
     unless user
       # Create new user with auto-generated username
