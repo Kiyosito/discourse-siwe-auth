@@ -42,27 +42,50 @@ begin
   end
   
   # Testar o método verify
-  puts "\nTestando os argumentos do método verify..."
+  puts "\nTestando os métodos de verificação..."
   
-  # Verificar os parâmetros aceitos pelo método verify
-  begin
-    # Tentativa com nonce e domain
-    siwe_msg.verify(signature: "0x1234", domain: "forum.kiyosito.io", nonce: "BPyfG80P0VQ55O45")
-    puts "verify aceita os parâmetros signature, domain e nonce"
-  rescue ArgumentError => e
-    puts "Erro ao chamar verify com domain e nonce: #{e.message}"
-  rescue => e
-    puts "Outro erro ao verificar com domain e nonce: #{e.class}: #{e.message}"
+  # Verificar se o método verify existe na classe Message
+  if siwe_msg.respond_to?(:verify)
+    puts "O método verify existe na classe Message"
+    
+    begin
+      # Tentativa com nonce e domain
+      siwe_msg.verify(signature: "0x1234", domain: "forum.kiyosito.io", nonce: "BPyfG80P0VQ55O45")
+      puts "verify aceita os parâmetros signature, domain e nonce"
+    rescue ArgumentError => e
+      puts "Erro ao chamar verify com domain e nonce: #{e.message}"
+    rescue => e
+      puts "Outro erro ao verificar com domain e nonce: #{e.class}: #{e.message}"
+    end
+  else
+    puts "O método verify NÃO existe na classe Message"
   end
   
-  begin
-    # Tentativa só com nonce
-    siwe_msg.verify(signature: "0x1234", nonce: "BPyfG80P0VQ55O45")
-    puts "verify aceita os parâmetros signature e nonce"
-  rescue ArgumentError => e
-    puts "Erro ao chamar verify só com nonce: #{e.message}"
-  rescue => e
-    puts "Outro erro ao verificar só com nonce: #{e.class}: #{e.message}"
+  # Verificar se existe a classe Siwe::Verifier
+  if defined?(Siwe::Verifier)
+    puts "A classe Siwe::Verifier existe"
+    
+    begin
+      verifier = Siwe::Verifier.new
+      puts "Métodos disponíveis em Siwe::Verifier: #{verifier.methods - Object.methods}"
+      
+      if verifier.respond_to?(:verify)
+        puts "O método verify existe em Siwe::Verifier"
+        
+        begin
+          verifier.verify(message: siwe_msg, signature: "0x1234")
+          puts "Siwe::Verifier.verify aceita os parâmetros message e signature"
+        rescue ArgumentError => e
+          puts "Erro ao chamar Siwe::Verifier.verify: #{e.message}"
+        rescue => e
+          puts "Outro erro ao chamar Siwe::Verifier.verify: #{e.class}: #{e.message}"
+        end
+      end
+    rescue => e
+      puts "Erro ao criar Siwe::Verifier: #{e.class}: #{e.message}"
+    end
+  else
+    puts "A classe Siwe::Verifier NÃO existe"
   end
   
 rescue => e

@@ -43,8 +43,8 @@ module OmniAuth
           validation_nonce = request.params["nonce"].presence || session["siwe_nonce"]
           Rails.logger.info("[SIWE OmniAuth] Using nonce: #{validation_nonce}")
 
-          # Verify signature with nonce and domain (siwe 1.1.2 requires both)
-          siwe_msg.verify(signature: signature, domain: siwe_msg.domain, nonce: validation_nonce)
+          # Use Message.validate for siwe 1.0.0
+          siwe_msg.validate(signature)
           Rails.logger.info("[SIWE OmniAuth] Signature verified successfully")
 
           eth_address = (wallet_param.presence || siwe_msg.address).to_s.downcase

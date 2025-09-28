@@ -66,11 +66,8 @@ module DiscourseSiwe
         validation_nonce = nonce.presence || session[:siwe_nonce]
         Rails.logger.info("[SIWE] Using nonce for validation: #{validation_nonce.inspect}")
         
-        siwe_msg.verify(
-          signature: signature,
-          domain: Discourse.current_hostname,
-          nonce: validation_nonce
-        )
+        # Use Message.validate for siwe 1.0.0
+        siwe_msg.validate(signature)
 
         Rails.logger.info("[SIWE] signature verified OK for #{address}")
 
