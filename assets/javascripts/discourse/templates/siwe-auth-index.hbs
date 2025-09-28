@@ -1,18 +1,31 @@
 <div class="siwe-auth-container">
-  <h2>Sign in with Ethereum</h2>
-  <p>Connect your wallet to sign in to the forum.</p>
+  <div class="kiyosito-branding">
+    <img src="/images/logo-kiyosito.png" alt="Kiyosito Logo" class="kiyosito-logo" onerror="this.style.display='none'"/>
+    <h1>Kiyosito Forum</h1>
+  </div>
   
-        <form id="siwe-sign" method="POST" action="/auth/siwe/callback" style="display: none;">
-        </form>
+  <h2>Bem-vindo ao Fórum Kiyosito</h2>
+  <p class="forum-description">
+    Este é o espaço oficial para discussões da comunidade Kiyosito DAO. 
+    Participe das conversas sobre governança, propostas e desenvolvimento do projeto.
+  </p>
+  
+  <div class="token-requirements">
+    <p><strong>Requisitos de Token:</strong></p>
+    <p>Você precisa ter pelo menos <strong>100 ITO</strong> ou <strong>100 gITO</strong> tokens para acessar este fórum.</p>
+  </div>
+  
+  <form id="siwe-sign" method="POST" action="/auth/siwe/callback" style="display: none;">
+  </form>
   
   <div class="eth_provider_container">
     <div class="eth_provider_auth_button">
       <button 
-        class="btn btn-primary btn-large siwe-auth-button" 
+        class="btn btn-kiyosito btn-large siwe-auth-button" 
         type="button"
         id="siwe-auth-button"
       >
-        Sign-in with Ethereum
+        Sign-in with Kiyosito
       </button>
     </div>
   </div>
