@@ -25,8 +25,9 @@
 }
 
 .kiyosito-logo {
-  max-width: 150px;
+  max-width: 120px;
   margin-bottom: 1em;
+  height: auto;
 }
 
 .siwe-auth-container h1 {
@@ -59,7 +60,7 @@
 }
 
 .btn-kiyosito {
-  background-color: #e74c3c !important;
+  background-color: #ED1C24 !important;
   color: white !important;
   font-weight: bold;
   padding: 12px 24px;
@@ -69,7 +70,7 @@
 }
 
 .btn-kiyosito:hover {
-  background-color: #c0392b !important;
+  background-color: #c91017 !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
